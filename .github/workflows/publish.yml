@@ -99,6 +99,18 @@ jobs:
         with:
           path: ${{ runner.temp }}/site
 
+      # deploy-pages sometimes fails on GitHub's side ("Fetching artifact metadata failed"): 4 of 12 runs
+      # on 22-25 Nov 2026. The build and checks had passed, so wait and deploy the same artifact again.
       - name: Deploy to GitHub Pages
         id: deploy
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before retrying the deploy
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 90
+
+      - name: Deploy to GitHub Pages (retry)
+        id: deploy_retry
+        if: steps.deploy.outcome == 'failure'
         uses: actions/deploy-pages@v4
